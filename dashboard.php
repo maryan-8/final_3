@@ -14,9 +14,26 @@ if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
 $feedback = "";
 
-// --- DETERMINE WHICH SECTION TO SHOW (function) ---
+// --- HOMEPAGE IMAGE UPLOAD HANDLER ---
+if (isset($_POST['upload_homepage_image']) && isset($_FILES['homepage_image'])) {
+    $upload_dir = "uploads/homepage/";
+    if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+    $ext = strtolower(pathinfo($_FILES['homepage_image']['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg','jpeg','png','webp'];
+    if (in_array($ext, $allowed)) {
+        $target = $upload_dir . "hero." . $ext;
+        if (move_uploaded_file($_FILES['homepage_image']['tmp_name'], $target)) {
+            $feedback = "<div class='alert success'>Homepage image updated!</div>";
+        } else {
+            $feedback = "<div class='alert danger'>Failed to upload homepage image.</div>";
+        }
+    } else {
+        $feedback = "<div class='alert danger'>Invalid file type for homepage image.</div>";
+    }
+}
+
+// --- SECTION HANDLER ---
 $current_section = 'home';
-// prioritize: POST > GET > default
 if (isset($_POST['current_section'])) {
     $current_section = $_POST['current_section'];
 } elseif (isset($_GET['section'])) {
@@ -36,7 +53,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS albums (
 // --- ADD ALBUM ---
 if (isset($_POST['add_album']) && !empty($_POST['album_name']) && !empty($_POST['album_type'])) {
     $album_name = trim($_POST['album_name']);
-    $album_type = $_POST['album_type'] === 'debut' ? 'debut' : 'wedding'; // Only wedding or debut allowed
+    $album_type = $_POST['album_type'] === 'debut' ? 'debut' : 'wedding';
     $stmt = $conn->prepare("INSERT INTO albums (name, type) VALUES (?, ?)");
     $stmt->bind_param("ss", $album_name, $album_type);
     if ($stmt->execute()) {
@@ -48,14 +65,13 @@ if (isset($_POST['add_album']) && !empty($_POST['album_name']) && !empty($_POST[
         $feedback = "<div class='alert danger'>Failed to create album.</div>";
     }
     $stmt->close();
-    $current_section = "upload"; // Stay on upload section
+    $current_section = "upload";
 }
 
 // --- RENAME ALBUM ---
 if (isset($_POST['rename_album']) && isset($_POST['album_id']) && isset($_POST['new_album_name'])) {
     $album_id = intval($_POST['album_id']);
     $new_name = trim($_POST['new_album_name']);
-    // Don't rename to empty or only whitespace
     if ($new_name !== "") {
         $stmt = $conn->prepare("UPDATE albums SET name=? WHERE id=?");
         $stmt->bind_param("si", $new_name, $album_id);
@@ -308,7 +324,6 @@ foreach (array_merge($albumRowsWedding, $albumRowsDebut) as $album) {
     $images_count += count(get_album_images($album['id']));
 }
 $total_images_count = $images_count;
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -319,7 +334,7 @@ $total_images_count = $images_count;
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-       :root {
+        :root {
             --primary: #234b3a;
             --accent: #f8b400;
             --light: #f7f8fa;
@@ -438,8 +453,6 @@ $total_images_count = $images_count;
             text-decoration: none;
             color: inherit;
         }
-        .edit-btn { background: #fffbe7; color: #c58700; border: 1px solid #f8b400;}
-        .edit-btn:hover { background: #f8e3a3;}
         .delete-btn { background: #fdeaea; color: var(--danger); border: 1px solid #e74c3c;}
         .delete-btn:hover { background: #f9c9c5;}
         .accept-btn { background: #eafaf1; color: var(--success); border: 1px solid #27ae60;}
@@ -453,42 +466,50 @@ $total_images_count = $images_count;
             background: #fdeaea; color: #e74c3c; border: 1px solid #e74c3c; padding: 5px 14px; border-radius: 5px; cursor: pointer;
         }
         .delete-image-btn:hover { background: #f9c9c5;}
-        .modal, .modal-overlay { display: none;}
-        .modal-overlay.show {
-            display: block;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.35);
-            z-index: 100;
+        .dashboard-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(230px,1fr));
+            gap: 24px;
+            margin-bottom: 34px;
         }
-        .modal.show {
-            display: block;
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+        .dashboard-summary-card {
             background: #fff;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-            border-radius: 14px;
-            z-index: 101;
-            width: 95vw;
-            max-width: 470px;
-            padding: 36px 30px 30px 30px;
+            border-radius: 13px;
+            box-shadow: 0 4px 14px rgba(44,62,80,0.10);
+            padding: 25px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .modal form { display: flex; flex-direction: column; gap: 14px;}
-        .modal label { font-weight: 700; color: var(--primary);}
-        .modal input, .modal textarea {
-            padding: 9px 11px;
-            border-radius: 5px;
-            border: 1px solid #bbb;
-            font-size: 1rem;
+        .dashboard-summary-card .summary-title {
+            font-size: 1.05rem;
+            color: #234b3a;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
-        .modal textarea { min-height: 80px;}
-        .modal .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 13px;}
-        .modal .modal-actions button { padding: 7px 16px; border-radius: 5px; font-weight: 600; border: none; font-size: 1rem; cursor: pointer; transition: background 0.2s;}
-        .modal .save-btn { background: var(--primary); color: #fff;}
-        .modal .cancel-btn { background: #bbb; color: #fff;}
-        .modal .save-btn:hover { background: #18412b;}
-        .modal .cancel-btn:hover { background: #999;}
+        .dashboard-summary-card .summary-count {
+            font-size: 2.1rem;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .dashboard-summary-card .summary-icon {
+            font-size: 2.3rem;
+            color: #f8b400;
+            background: #fdf6e3;
+            padding: 13px;
+            border-radius: 50%;
+        }
+        .img-list { display: flex; flex-wrap: wrap; gap: 10px; }
+        .img-item { position: relative; display: inline-block; }
+        .album-folder-img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            box-shadow: 1px 1px 3px #ccc;
+            display: block;
+            background: #f5f5f5;
+        }
         @media (max-width: 900px) {
             .main-content { padding: 30px 4vw 8vw 4vw;}
             .section-card { padding: 12px 2vw;}
@@ -553,61 +574,6 @@ $total_images_count = $images_count;
             .dashboard-title, .section-title { font-size: 1.17rem;}
             .dashboard-header, .dashboard-actions { flex-direction: column; gap: 8px;}
             .image-thumb { max-width: 55px; max-height: 45px;}
-            .modal.show { padding: 12px 2vw 15px 2vw;}
-            .modal label, .modal input, .modal textarea { font-size: 0.97rem;}
-        }
-        .dashboard-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit,minmax(230px,1fr));
-            gap: 24px;
-            margin-bottom: 34px;
-        }
-        .dashboard-summary-card {
-            background: #fff;
-            border-radius: 13px;
-            box-shadow: 0 4px 14px rgba(44,62,80,0.10);
-            padding: 25px 22px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .dashboard-summary-card .summary-title {
-            font-size: 1.05rem;
-            color: #234b3a;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        .dashboard-summary-card .summary-count {
-            font-size: 2.1rem;
-            font-weight: bold;
-            color: #27ae60;
-        }
-        .dashboard-summary-card .summary-icon {
-            font-size: 2.3rem;
-            color: #f8b400;
-            background: #fdf6e3;
-            padding: 13px;
-            border-radius: 50%;
-        }
-        @media (max-width: 650px) {
-            .dashboard-summary-grid { gap: 14px;}
-            .dashboard-summary-card { padding: 14px 10px;}
-            .dashboard-summary-card .summary-count { font-size: 1.3rem;}
-            .dashboard-summary-card .summary-title { font-size: 0.99rem;}
-        }
-        .img-list { display: flex; flex-wrap: wrap; gap: 10px; }
-        .img-item { position: relative; display: inline-block; }
-        .album-folder-img {
-            width: 80px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 6px;
-            box-shadow: 1px 1px 3px #ccc;
-            display: block;
-            background: #f5f5f5;
-        }
-        @media (max-width: 650px) {
-            .album-folder-img { width: 48px; height: 36px; }
         }
     </style>
 </head>
@@ -617,42 +583,42 @@ $total_images_count = $images_count;
     <span class="logo"><i class="fa-solid fa-leaf"></i> The BearFruits Admin</span>
 </div>
 <div class="dashboard">
-     <aside class="sidebar" id="sidebar">
-            <div class="logo">
-                <i class="fa-solid fa-leaf"></i> <br>The BearFruits Admin</br>
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-leaf"></i> <br>The BearFruits Admin</br>
+        </div>
+        <nav>
+            <a href="#" class="active" id="nav-home"><i class="fa-fw fa-solid fa-house"></i>Home</a>
+            <a href="#" id="nav-bookings"><i class="fa-fw fa-solid fa-calendar-check"></i>Bookings</a>
+            <a href="#" id="nav-accepted"><i class="fa-fw fa-solid fa-check"></i>Accepted</a>
+            <a href="#" id="nav-security"><i class="fa-fw fa-solid fa-user-shield"></i>Security</a>
+            <a href="#" id="nav-upload"><i class="fa-fw fa-solid fa-image"></i>Upload Image</a>
+            <a href="logout.php" class="dashboard-actions"><i class="fa fa-sign-out-alt"></i> Logout</a>
+        </nav>
+        <div style="margin-top:40px;padding:0 18px;">
+            <div class="dashboard-summary-card" style="margin-bottom:12px;">
+                <span>
+                    <div class="summary-title">Bookings</div>
+                    <div class="summary-count"><?= $total_bookings_count ?></div>
+                </span>
+                <span class="summary-icon"><i class="fa-solid fa-calendar-check"></i></span>
             </div>
-            <nav>
-                <a href="#" class="active" id="nav-home"><i class="fa-fw fa-solid fa-house"></i>Home</a>
-                <a href="#" id="nav-bookings"><i class="fa-fw fa-solid fa-calendar-check"></i>Bookings</a>
-                <a href="#" id="nav-accepted"><i class="fa-fw fa-solid fa-check"></i>Accepted</a>
-                <a href="#" id="nav-security"><i class="fa-fw fa-solid fa-user-shield"></i>Security</a>
-                <a href="#" id="nav-upload"><i class="fa-fw fa-solid fa-image"></i>Upload Image</a>
-                <a href="logout.php" class="dashboard-actions"><i class="fa fa-sign-out-alt"></i> Logout</a>
-            </nav>
-            <div style="margin-top:40px;padding:0 18px;">
-                <div class="dashboard-summary-card" style="margin-bottom:12px;">
-                    <span>
-                        <div class="summary-title">Bookings</div>
-                        <div class="summary-count"><?= $total_bookings_count ?></div>
-                    </span>
-                    <span class="summary-icon"><i class="fa-solid fa-calendar-check"></i></span>
-                </div>
-                <div class="dashboard-summary-card" style="margin-bottom:12px;">
-                    <span>
-                        <div class="summary-title">Accepted</div>
-                        <div class="summary-count"><?= $total_accepted_count ?></div>
-                    </span>
-                    <span class="summary-icon"><i class="fa-solid fa-check"></i></span>
-                </div>
-                <div class="dashboard-summary-card">
-                    <span>
-                        <div class="summary-title">Uploaded Images</div>
-                        <div class="summary-count"><?= $total_images_count ?></div>
-                    </span>
-                    <span class="summary-icon"><i class="fa-solid fa-image"></i></span>
-                </div>
+            <div class="dashboard-summary-card" style="margin-bottom:12px;">
+                <span>
+                    <div class="summary-title">Accepted</div>
+                    <div class="summary-count"><?= $total_accepted_count ?></div>
+                </span>
+                <span class="summary-icon"><i class="fa-solid fa-check"></i></span>
             </div>
-        </aside>
+            <div class="dashboard-summary-card">
+                <span>
+                    <div class="summary-title">Uploaded Images</div>
+                    <div class="summary-count"><?= $total_images_count ?></div>
+                </span>
+                <span class="summary-icon"><i class="fa-solid fa-image"></i></span>
+            </div>
+        </div>
+    </aside>
     <main class="main-content">
         <div class="dashboard-header">
             <span class="dashboard-title" id="dashboard-title">Dashboard Home</span>
@@ -662,38 +628,50 @@ $total_images_count = $images_count;
         </div>
         <?php if (!empty($feedback)) echo $feedback; ?>
 
+        <!-- HOME/OVERVIEW -->
         <div class="section-card<?= $current_section == 'home' ? ' active': '' ?>" id="section-home">
-             <div class="section-title"><i class="fa fa-house"></i> Overview</div>
+            <div class="section-title"><i class="fa fa-house"></i> Overview</div>
             <div class="dashboard-summary-grid">
-                <div class="dashboard-summary-card">
-                    <span>
-                        <div class="summary-title">Bookings</div>
-                        <div class="summary-count"><?= $total_bookings_count ?></div>
-                    </span>
-                    <span class="summary-icon"><i class="fa-solid fa-calendar-check"></i></span>
-                </div>
-                <div class="dashboard-summary-card">
-                    <span>
-                        <div class="summary-title">Accepted</div>
-                        <div class="summary-count"><?= $total_accepted_count ?></div>
-                    </span>
-                    <span class="summary-icon"><i class="fa-solid fa-check"></i></span>
-                </div>
-                <div class="dashboard-summary-card">
-                    <span>
-                        <div class="summary-title">Uploaded Images</div>
-                        <div class="summary-count"><?= $total_images_count ?></div>
-                    </span>
-                    <span class="summary-icon"><i class="fa-solid fa-image"></i></span>
-                </div>
+                <a href="#" onclick="showSection('bookings');return false;" style="text-decoration:none;">
+                    <div class="dashboard-summary-card">
+                        <span>
+                            <div class="summary-title">Bookings</div>
+                            <div class="summary-count"><?= $total_bookings_count ?></div>
+                        </span>
+                        <span class="summary-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                    </div>
+                </a>
+                <a href="#" onclick="showSection('accepted');return false;" style="text-decoration:none;">
+                    <div class="dashboard-summary-card">
+                        <span>
+                            <div class="summary-title">Accepted</div>
+                            <div class="summary-count"><?= $total_accepted_count ?></div>
+                        </span>
+                        <span class="summary-icon"><i class="fa-solid fa-check"></i></span>
+                    </div>
+                </a>
+                <a href="#" onclick="showSection('upload');return false;" style="text-decoration:none;">
+                    <div class="dashboard-summary-card">
+                        <span>
+                            <div class="summary-title">Uploaded Images</div>
+                            <div class="summary-count"><?= $total_images_count ?></div>
+                        </span>
+                        <span class="summary-icon"><i class="fa-solid fa-image"></i></span>
+                    </div>
+                </a>
             </div>
             <div style="margin-top: 20px;">
-                <p>Welcome to your admin dashboard. Use the side menu to manage bookings, albums, and security.</p>
+                <p>Welcome to your admin dashboard. Use the side menu to manage bookings, albums, and images.</p>
             </div>
         </div>
-        
-        <!-- UPLOAD SECTION, PARTED INTO WEDDING/DEBUT -->
+
+        <!-- UPLOAD SECTION (with homepage image upload at the top) -->
         <div class="section-card<?= $current_section == 'upload' ? ' active': '' ?>" id="section-upload">
+            <form method="post" enctype="multipart/form-data" style="margin-bottom:20px;">
+                <label style="color:#234b3a;font-weight:bold;">Change Homepage Main Image:</label>
+                <input type="file" name="homepage_image" accept="image/*" required>
+                <button type="submit" name="upload_homepage_image" class="save-btn">Upload Homepage Image</button>
+            </form>
             <h3 style="margin-bottom:10px; color:#234b3a;">Wedding Albums</h3>
             <form method="post" style="margin-bottom:20px;">
                 <input type="hidden" name="current_section" value="upload">
@@ -712,7 +690,7 @@ $total_images_count = $images_count;
                     <th>Images</th>
                     <th>Delete</th>
                 </tr>
-                <?php foreach ($albumRowsWedding as $album): 
+                <?php foreach ($albumRowsWedding as $album):
                     $thumb = $album['thumbnail'] ? "uploads/albums/{$album['id']}/{$album['thumbnail']}" : "https://via.placeholder.com/60x60?text=No+Thumb";
                 ?>
                 <tr>
@@ -768,7 +746,7 @@ $total_images_count = $images_count;
                                     <input type="hidden" name="current_section" value="upload">
                                     <input type="hidden" name="album_id" value="<?php echo $album['id']; ?>">
                                     <input type="hidden" name="image" value="<?php echo htmlspecialchars($img); ?>">
-                                    <button type="submit" name="delete_album_image" onclick="return confirm('Delete image?');" style="background: #e74c3c; color: #fff; border:none; border-radius:3px;">x</button>
+                                    <button type="submit" name="delete_album_image" onclick="return confirm('Delete image?');" style="background: #e74c3c; color: #fff; border:none; border-radius:5px; font-size:0.9em;padding:2px 7px;">&times;</button>
                                 </form>
                             </div>
                         <?php endforeach; ?>
@@ -803,7 +781,7 @@ $total_images_count = $images_count;
                     <th>Images</th>
                     <th>Delete</th>
                 </tr>
-                <?php foreach ($albumRowsDebut as $album): 
+                <?php foreach ($albumRowsDebut as $album):
                     $thumb = $album['thumbnail'] ? "uploads/albums/{$album['id']}/{$album['thumbnail']}" : "https://via.placeholder.com/60x60?text=No+Thumb";
                 ?>
                 <tr>
@@ -859,7 +837,7 @@ $total_images_count = $images_count;
                                     <input type="hidden" name="current_section" value="upload">
                                     <input type="hidden" name="album_id" value="<?php echo $album['id']; ?>">
                                     <input type="hidden" name="image" value="<?php echo htmlspecialchars($img); ?>">
-                                    <button type="submit" name="delete_album_image" onclick="return confirm('Delete image?');" style="background: #e74c3c; color: #fff; border:none; border-radius:3px;">x</button>
+                                    <button type="submit" name="delete_album_image" onclick="return confirm('Delete image?');" style="background: #e74c3c; color: #fff; border:none; border-radius:5px; font-size:0.9em;padding:2px 7px;">&times;</button>
                                 </form>
                             </div>
                         <?php endforeach; ?>
@@ -876,8 +854,10 @@ $total_images_count = $images_count;
                 <?php endforeach; ?>
             </table>
         </div>
+
+        <!-- BOOKINGS SECTION -->
         <div class="section-card<?= $current_section == 'bookings' ? ' active': '' ?>" id="section-bookings">
-             <div class="section-title"><i class="fa fa-hourglass-start"></i> Pending Bookings</div>
+            <div class="section-title"><i class="fa fa-hourglass-start"></i> Pending Bookings</div>
             <?php if ($result->num_rows > 0): ?>
             <table>
                 <thead>
@@ -896,10 +876,18 @@ $total_images_count = $images_count;
                         <td><?php echo htmlspecialchars($row['message']); ?></td>
                         <td><?php echo $row['booking_date']; ?></td>
                         <td class="table-actions">
-                            <a href="#" class="edit-btn" data-id="<?php echo $row['id']; ?>"><i class="fa fa-pencil"></i> Edit</a>
-                            <a href="?delete=<?php echo $row['id']; ?>&section=bookings" class="delete-btn" onclick="return confirm('Delete this booking?');"><i class="fa fa-trash"></i> Delete</a>
-                            <a href="?accept=<?php echo $row['id']; ?>&section=bookings" class="accept-btn" onclick="return confirm('Accept this booking?');"><i class="fa fa-check"></i> Accept</a>
-                        </td>
+                        <a target="_blank" class="delete-btn"
+                        href="https://mail.google.com/mail/?view=cm&fs=1&to=<?php echo urlencode($row['email']); ?>&su=Your Booking at BearFruits Studios&body=Dear <?php echo urlencode($row['name']); ?>,%0A%0AWe regret to inform you that your booking has been declined or deleted. Please contact us if you have further questions.">
+                            <i class="fa fa-envelope"></i> Email Decline
+                        </a>
+                        <a href="?accept=<?php echo $row['id']; ?>&section=bookings" class="accept-btn" onclick="return confirm('Accept this booking?');">
+                            <i class="fa fa-check"></i> Accept
+                        </a>
+                        <a target="_blank" class="accept-btn"
+                        href="https://mail.google.com/mail/?view=cm&fs=1&to=<?php echo urlencode($row['email']); ?>&su=Your Booking Status at BearFruits Studios&body=Dear <?php echo urlencode($row['name']); ?>,%0A%0AYour booking has been accepted. Please contact us if you have further questions.">
+                            <i class="fa fa-envelope"></i> Email Accept
+                        </a>
+                    </td>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -908,8 +896,10 @@ $total_images_count = $images_count;
                 <div class="alert">No new bookings found.</div>
             <?php endif; ?>
         </div>
+
+        <!-- ACCEPTED SECTION -->
         <div class="section-card<?= $current_section == 'accepted' ? ' active': '' ?>" id="section-accepted">
-             <div class="section-title"><i class="fa fa-check"></i> Accepted Bookings</div>
+            <div class="section-title"><i class="fa fa-check"></i> Accepted Bookings</div>
             <?php if ($result2->num_rows > 0): ?>
             <table>
                 <thead>
@@ -935,8 +925,10 @@ $total_images_count = $images_count;
                 <div class="alert">No accepted bookings found.</div>
             <?php endif; ?>
         </div>
+
+        <!-- SECURITY SECTION -->
         <div class="section-card<?= $current_section == 'security' ? ' active': '' ?>" id="section-security">
-              <div class="section-title"><i class="fa fa-user-shield"></i> Security Manager</div>
+            <div class="section-title"><i class="fa fa-user-shield"></i> Security Manager</div>
             <form id="securityForm" method="POST" action="update_admin.php">
                 <label for="username">New Username:</label>
                 <input type="text" id="username" name="username" required />
@@ -950,27 +942,6 @@ $total_images_count = $images_count;
             <div class="alert" style="margin-top:20px;">Security manager functionality coming soon.</div>
         </div>
     </main>
-</div>
-<div class="modal-overlay" id="modal-overlay"></div>
-<div class="modal" id="editModal">
-     <h2>Edit Booking</h2>
-    <form method="POST" id="editForm">
-        <input type="hidden" name="id" id="edit-id">
-        <label>Name</label>
-        <input type="text" name="name" id="edit-name" required>
-        <label>Email</label>
-        <input type="email" name="email" id="edit-email" required>
-        <label>Phone</label>
-        <input type="text" name="phone" id="edit-phone" required>
-        <label>Service</label>
-        <input type="text" name="service" id="edit-service" required>
-        <label>Message</label>
-        <textarea name="message" id="edit-message" required></textarea>
-        <div class="modal-actions">
-            <button type="submit" name="update_booking" class="save-btn">Save</button>
-            <button type="button" class="cancel-btn" id="closeEditModal">Cancel</button>
-        </div>
-    </form>
 </div>
 <script>
     let currentSection = "<?= $current_section ?>";
@@ -1044,7 +1015,6 @@ $total_images_count = $images_count;
             dashboardTitle.innerText = "Upload New Album Picture";
         }
         currentSection = section;
-        // Update URL without reload
         if (history.pushState) {
             history.replaceState(null, '', '?section=' + section);
         }
@@ -1056,35 +1026,6 @@ $total_images_count = $images_count;
     navUpload.onclick = e => { e.preventDefault(); showSection('upload'); }
     document.getElementById('refreshBtn').onclick = () => window.location.reload();
 
-    // Modal edit for bookings
-    const editModal = document.getElementById('editModal');
-    const modalOverlay = document.getElementById('modal-overlay');
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            // Only trigger for bookings edit, not for album rename (album rename is a submit button not a link)
-            if (btn.closest('#section-bookings')) {
-                e.preventDefault();
-                const tr = btn.closest('tr');
-                const booking = JSON.parse(tr.dataset.booking);
-                document.getElementById('edit-id').value = booking.id;
-                document.getElementById('edit-name').value = booking.name;
-                document.getElementById('edit-email').value = booking.email;
-                document.getElementById('edit-phone').value = booking.phone;
-                document.getElementById('edit-service').value = booking.service;
-                document.getElementById('edit-message').value = booking.message;
-                editModal.classList.add('show');
-                modalOverlay.classList.add('show');
-            }
-        });
-    });
-    document.getElementById('closeEditModal').onclick = function() {
-        editModal.classList.remove('show');
-        modalOverlay.classList.remove('show');
-    }
-    modalOverlay.onclick = function() {
-        editModal.classList.remove('show');
-        modalOverlay.classList.remove('show');
-    }
     document.getElementById("resetBtn").addEventListener("click", function () {
         if (confirm("Are you sure you want to reset the password to default?")) {
             fetch("reset_password.php", { method: "POST" })
