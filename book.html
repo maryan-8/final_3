@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Session - The BearFruits Studios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #417056;
+            --accent: #f1683a;
+            --white: #fff;
+            --navbar-bg: rgba(34, 75, 58, 0.95);
+            --navbar-bg-mobile: rgba(34, 75, 58, 0.99);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background-color: #2a4e3c;
+            color: #eee;
+            font-size: 14px;
+            background-image: url(img/img7.jpg);
+            background-size: cover;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        a {
+            text-decoration: none;
+        }
+        /* Navbar */
+        .navbar {
+            width: 100vw;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: space-between;
+            background: var(--navbar-bg);
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 20px 40px 0 30px;
+            box-sizing: border-box;
+            transition: background 0.3s;
+        }
+        .logo {
+            font-size: 1.8em;
+            font-weight: 900;
+            color: var(--white);
+            letter-spacing: 1px;
+            line-height: 1.1;
+        }
+        .navbar-links {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            align-items: flex-start;
+            margin-top: 2px;
+        }
+        .navbar-links a {
+            color: var(--white);
+            font-size: 1.08em;
+            font-weight: 600;
+            padding: 7px 16px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .navbar-links a:hover,
+        .navbar-links a.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 2em;
+            margin-left: 12px;
+            cursor: pointer;
+        }
+        .navbar.scrolled {
+            background: var(--navbar-bg-mobile);
+        }
+
+        /* Responsive Navbar */
+        @media (max-width: 900px) {
+            .navbar {
+                flex-direction: row;
+                align-items: flex-start;
+                padding: 14px 4vw 0 4vw;
+            }
+            .navbar-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                right: 0;
+                background: var(--navbar-bg-mobile);
+                box-shadow: 0 8px 24px #000a;
+                flex-direction: column;
+                gap: 0;
+                width: 210px;
+                border-radius: 0 0 0 10px;
+                padding: 24px 18px 15px 28px;
+                animation: fadeInMenu 0.24s ease;
+            }
+            .navbar-links.open {
+                display: flex;
+            }
+            .menu-toggle {
+                display: block;
+            }
+        }
+        @media (max-width: 600px) {
+            .navbar {
+                padding: 8px 2vw 0 2vw;
+            }
+            .logo { font-size: 1.18em; }
+            .navbar-links {
+                width: 90vw;
+                padding: 12px 4vw 10px 8vw;
+            }
+        }
+        @keyframes fadeInMenu {
+            from { opacity: 0; transform: translateY(-15px);}
+            to   { opacity: 1; transform: none;}
+        }
+
+        /* Booking Section */
+        .book-section {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 90px;
+            padding-bottom: 40px;
+        }
+        .booking-form {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 36px 36px 28px 36px;
+            border-radius: 12px;
+            box-shadow: 0 0 18px rgba(0, 0, 0, 0.5);
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+        .booking-form h2 {
+            font-size: 2em;
+            margin-bottom: 22px;
+            color: #fff;
+        }
+        .booking-form input, .booking-form select, .booking-form textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 11px 0;
+            border-radius: 6px;
+            border: none;
+            font-size: 1em;
+            background: #def3e6;
+            color: #1f1c1c;
+        }
+        .booking-form input:focus, .booking-form select:focus, .booking-form textarea:focus {
+            outline: 2px solid var(--primary);
+        }
+        .booking-form button {
+            padding: 12px 25px;
+            border-radius: 5px;
+            background-color: var(--primary);
+            color: #ebf0ee;
+            font-size: 1.11em;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .booking-form button:hover {
+            background-color: var(--accent);
+            color: #fff;
+        }
+        /* Socials and Footer */
+        .socials {
+            text-align: center;
+            margin-top: 40px;
+        }
+        .socials a {
+            color: white;
+            font-size: 2em;
+            margin: 0 15px;
+            border-radius: 50%;
+            transition: color 0.18s, transform 0.18s;
+        }
+        .socials a:hover {
+            color: var(--accent);
+            transform: scale(1.14) rotate(3deg);
+        }
+        footer {
+            background-color: #506d5dd5;
+            color: white;
+            text-align: center;
+            padding: 32px 10px 24px 10px;
+            font-size: 1em;
+        }
+        footer p {
+            margin-bottom: 10px;
+        }
+        footer p:last-child {
+            font-size: 0.95em;
+            margin-bottom: 0;
+        }
+        /* Scroll to Top Button */
+        #scrollUpArrow {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            font-size: 2rem;
+            background-color: rgba(119, 122, 120, 0);
+            color: white;
+            border-radius: 50%;
+            padding: 10px;
+            cursor: pointer;
+            opacity: 100;
+            transition: opacity 0.3s ease;
+            z-index: 9000;
+        }
+        #scrollUpArrow:hover {
+            font-size: 2.5rem;
+            background-color: rgba(160, 151, 151, 0);
+            z-index: 100;
+        }
+        /* Form Responsive */
+        @media (max-width: 600px) {
+            .booking-form {
+                padding: 18px 3vw 18px 3vw;
+                max-width: 97vw;
+            }
+            .book-section {
+                padding-top: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar" id="navbar">
+        <div class="logo">The BearFruits Studios</div>
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="navbar-links" id="navLinks">
+            <a href="homepage.html"><i class="fas fa-home"></i> Home</a>
+            <a href="album.php"><i class="fas fa-images"></i> Album</a>
+            <a href="about.html"><i class="fas fa-user"></i> About</a>
+        </div>
+    </nav>
+
+    <!-- Booking Section -->
+    <div class="book-section">
+        <div class="booking-form">
+            <h2>Book Your Session</h2>
+            <form action="db_connection.php" method="POST">
+                <input type="text" name="name" placeholder="Full Name" required>
+                <input type="email" name="email" placeholder="Email Address" required>
+                <input type="tel" name="phone" placeholder="Phone Number" required>
+                <input type="date" name="booking_date" placeholder="Booking Date" required>
+                <select name="service" required>
+                    <option value="">Select Service</option>
+                    <option value="Wedding Photography">Wedding Photography</option>
+                    <option value="Debut Photography">Debut Photography</option>
+                </select>
+                <textarea name="message" placeholder="Message (optional)" rows="4"></textarea>
+                <button type="submit">Book Now</button>
+            </form>
+        </div>
+    </div>
+    <!-- Socials -->
+    <div class="socials">
+        <a href="https://www.facebook.com/thebearfruitstudios" target="_blank" aria-label="Facebook">
+            <i class="fab fa-facebook"></i>
+        </a>
+        <a href="https://www.instagram.com/thebearfruitstudios" target="_blank" aria-label="Instagram">
+            <i class="fab fa-instagram"></i>
+        </a>
+    </div>
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 The BearFruit Studios</p>
+        <p>Crafted with passion & creativity · All rights reserved</p>
+    </footer>
+    <div id="scrollUpArrow" onclick="scrollToTop()">↑</div>
+    <script>
+        // Navbar scroll color and scroll to top
+        window.onscroll = function () {
+            const navbar = document.getElementById("navbar");
+            const scrollUpArrow = document.getElementById("scrollUpArrow");
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                navbar.classList.add("scrolled");
+                scrollUpArrow.style.display = "block";
+            } else {
+                navbar.classList.remove("scrolled");
+                scrollUpArrow.style.display = "none";
+            }
+        };
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        // Responsive Navbar Toggle
+        document.getElementById('menuToggle').onclick = function() {
+            document.getElementById('navLinks').classList.toggle('open');
+        };
+        // Trigger "Book Now" button on Enter key press
+        document.addEventListener("DOMContentLoaded", function() {
+            const bookingForm = document.querySelector('.booking-form form');
+            const bookButton = document.querySelector('.booking-form button');
+            bookingForm.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    if (event.target.tagName !== "TEXTAREA") {
+                        event.preventDefault();
+                        bookButton.click();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

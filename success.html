@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Success - The BearFruits Studios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"> <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome -->
+</head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+* {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ font-family: 'Poppins', sans-serif;
+}
+body{
+ margin: 0;
+ background-color: #2a4e3c;
+ color: #eee;
+ font-family: Poppins;
+ font-size: 12px;
+ background-image: url(img/img8.jpg);
+ background-size: cover;
+ background-position: center;
+}
+a{
+ text-decoration: none;
+}
+header{
+    width: 1140px;
+    max-width: 80%;
+    margin: auto;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 100;
+}
+header a{
+ color: #eee;
+ margin-right: 40px;
+}
+  /* Navigation Bar */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgb(25, 51, 25);
+    transition: background 0.3s;
+}
+
+.navbar a {
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background 0.3s ease-in-out;
+}
+
+.navbar a:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 600;
+}
+.navbar.scrolled {
+    background: rgba(57, 92, 62, 0.877); /* Dark background */
+}
+
+/* Gratitude Message Section */
+.book-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    flex-direction: column;
+}
+
+.gratitude-message {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    max-width: 600px;
+    width: 100%;
+}
+
+.gratitude-message h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.gratitude-message p {
+    font-size: 1.2em;
+    color: #fff;
+    margin-bottom: 30px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.button-container a {
+    padding: 12px 25px;
+    border-radius: 5px;
+    background-color: #234b3a;
+    color: #ebf0ee;
+    font-size: 1.2em;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button-container a:hover {
+    background-color: #265e47;
+    color: #fff;
+}
+
+/* Footer Styles */
+footer {
+    background-color: #506d5dd5;
+    color: white;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+footer p {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+footer p:last-child {
+    font-size: 0.95em;
+    margin-bottom: 0;
+}
+</style>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="logo">The BearFruits Studios</div>
+        <div>
+            <a href="homepage.html"><i class="fas fa-home"></i> Home</a>
+            <a href="album.php">Album</a> 
+            <a href="about.html"><i class="fas fa-user"></i> About</a>
+        </div>
+    </nav>
+
+    <!-- Gratitude Section -->
+    <div class="book-section">
+        <div class="gratitude-message">
+            <h2>Thank You for Booking with Us!</h2>
+            <p>Your booking has been successfully received. We will get back to you shortly.</p>
+            
+            <div class="button-container">
+                <a href="homepage.html">Home Page</a>
+                <a href="book.html">Book Again</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 The BearFruit Studios</p>
+        <p>Crafted with passion & creativity · All rights reserved</p>
+    </footer>
+
+    <div id="scrollUpArrow" onclick="scrollToTop()">↑</div>    
+
+    <script>
+        window.onscroll = function () {
+            const navbar = document.getElementById("navbar");
+            const scrollUpArrow = document.getElementById("scrollUpArrow");
+            if (document.body.scrollTop > 0 || document.documentElement.scrollTop > 0) {
+                navbar.classList.add("scrolled"); 
+                scrollUpArrow.style.display = "block"; 
+            } else {
+                navbar.classList.remove("scrolled");
+                scrollUpArrow.style.display = "none"; 
+            }
+        };
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+</body>
+</html>
