@@ -877,16 +877,16 @@ $total_images_count = $images_count;
                         <td><?php echo $row['booking_date']; ?></td>
                         <td class="table-actions">
                         <a target="_blank" class="delete-btn"
-                        href="https://mail.google.com/mail/?view=cm&fs=1&to=<?php echo urlencode($row['email']); ?>&su=Your Booking at BearFruits Studios&body=Dear <?php echo urlencode($row['name']); ?>,%0A%0AWe regret to inform you that your booking has been declined or deleted. Please contact us if you have further questions.">
+                        href="https://mail.google.com/mail/?view=cm&fs=1&to=<?php echo urlencode($row['email']); ?>&su=Your Booking at BearFruits Studios&body=Dear <?php echo urlencode($row['name']); ?>,%0A%0AWe regret to inform you that your booking has been declined/deleted due to photographer's unavailability or date is fully booked . Please reply if you have any further questions.">
                             <i class="fa fa-envelope"></i> Email Decline
                         </a>
-                        <a href="?accept=<?php echo $row['id']; ?>&section=bookings" class="accept-btn" onclick="return confirm('Accept this booking?');">
-                            <i class="fa fa-check"></i> Accept
-                        </a>
-                        <a target="_blank" class="accept-btn"
-                        href="https://mail.google.com/mail/?view=cm&fs=1&to=<?php echo urlencode($row['email']); ?>&su=Your Booking Status at BearFruits Studios&body=Dear <?php echo urlencode($row['name']); ?>,%0A%0AYour booking has been accepted. Please contact us if you have further questions.">
-                            <i class="fa fa-envelope"></i> Email Accept
-                        </a>
+                        <form method="get" style="display:inline;" onsubmit="return handleEmailAccept(this, '<?php echo urlencode($row['email']); ?>', '<?php echo urlencode($row['name']); ?>', <?php echo $row['id']; ?>);">
+                            <input type="hidden" name="accept" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="section" value="bookings">
+                            <button type="submit" class="accept-btn" style="margin-top:3px;">
+                                <i class="fa fa-envelope"></i> Email Accept
+                            </button>
+                        </form>
                     </td>
                     </tr>
                     <?php endwhile; ?>
@@ -1034,6 +1034,26 @@ $total_images_count = $images_count;
                 .catch(error => { alert("An error occurred while resetting the password."); });
         }
     });
+    function handleEmailAccept(form, email, name, id) {
+        // Move booking to accepted via synchronous AJAX so the booking moves first
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "?accept=" + encodeURIComponent(id) + "&section=bookings", false); // synchronous request
+        xhr.send();
+
+        // Compose Gmail email in a new tab
+        var gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1"
+            + "&to=" + email
+            + "&su=Your Booking Status at BearFruits Studios"
+            + "&body=Dear " + name + ",%0A%0AYour booking has been accepted. Please reply if you have any further questions.";
+        window.open(gmailUrl, "_blank");
+
+        // Reload the page to update the bookings list
+        setTimeout(function() {
+            window.location.reload();
+        }, 400);
+
+        return false; // prevent normal form submission
+    }
 </script>
 </body>
 </html>
